@@ -150,26 +150,22 @@ def follow_index(request):
     '''Страница с подписками'''
     template = 'posts/follow.html'
     follower_user = request.user
+    following_authors = Follow.objects.filter(
+        user=follower_user
+    ).values('author')
+    post_list = Post.objects.filter(author__in=following_authors)
+    num_disp = settings.NUM_DISP_FOLLOW
+    page_obj = paginator(post_list, num_disp, request)
+    context = {'page_obj': page_obj}
     # Проверяем что есть подписки
     if Follow.objects.filter(user=follower_user).exists():
-        following_authors = Follow.objects.filter(
-            user=follower_user
-        ).values('author')
         # Проверяем что у авторов, на которых подписаны, есть посты
-        post_list = Post.objects.filter(author__in=following_authors)
         if post_list.count() > 0:
-            num_disp = settings.NUM_DISP_FOLLOW
-            page_obj = paginator(post_list, num_disp, request)
-            context = {
-                'page_obj': page_obj,
-                'subscription': 'posts_found',
-            }
+            context['subscription'] = 'posts_found'
         else:
-            context = {'subscription': 'zero_posts'}
+            context['subscription'] = 'zero_posts'
     else:
-        context = {
-            'subscription': 'zero_authors',
-        }
+        context['subscription'] = 'zero_authors'
     return render(request, template, context)
 
 
