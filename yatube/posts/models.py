@@ -1,7 +1,6 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 
-
 User = get_user_model()
 
 
@@ -104,6 +103,16 @@ class Follow(models.Model):
 
     class Meta:
         verbose_name = 'Связь автора и подписавшегося'
+        constraints = [
+            models.UniqueConstraint(
+                name="unique_relationships",
+                fields=['user', 'author'],
+            ),
+            models.CheckConstraint(
+                name="prevent_self_follow",
+                check=~models.Q(user=models.F('author')),
+            ),
+        ]
 
     def __str__(self):
         return 'Пользователь {} подписан на {}'.format(

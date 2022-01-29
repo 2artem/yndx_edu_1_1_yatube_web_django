@@ -65,10 +65,9 @@ def profile(request, username):
     }
     if not request.user.is_anonymous:
         follower_user = request.user
-        if Follow.objects.filter(user=follower_user, author=user):
-            following = True
-        else:
-            following = False
+        following = Follow.objects.filter(
+            user=follower_user,
+            author=user).exists()
         context['following'] = following
     return render(request, template, context)
 
@@ -98,12 +97,11 @@ def post_create(request):
         request.POST or None,
         files=request.FILES or None,
     )
-    if request.method == 'POST':
-        if form.is_valid():
-            post = form.save(commit=False)
-            post.author = request.user
-            post.save()
-            return redirect('posts:profile', username=post.author)
+    if request.method == 'POST' and form.is_valid():
+        post = form.save(commit=False)
+        post.author = request.user
+        post.save()
+        return redirect('posts:profile', username=post.author)
     return render(request, template, {'form': form})
 
 
@@ -150,10 +148,7 @@ def follow_index(request):
     '''Страница с подписками'''
     template = 'posts/follow.html'
     follower_user = request.user
-    following_authors = Follow.objects.filter(
-        user=follower_user
-    ).values('author')
-    post_list = Post.objects.filter(author__in=following_authors)
+    post_list = Post.objects.filter(author__following__user=follower_user)
     num_disp = settings.NUM_DISP_FOLLOW
     page_obj = paginator(post_list, num_disp, request)
     context = {'page_obj': page_obj}
@@ -174,16 +169,15 @@ def profile_follow(request, username):
     '''Подписаться на Автора'''
     user_request = request.user
     author = get_object_or_404(User, username=username)
-    # Если пользователь и есть автор
+    # Если пользователь и есть автор - подписку на себя не создаем!
     if author == user_request:
         return redirect('posts:profile', username=author.username)
-    else:
-        # Ищем связь-подписку, если нет создаем
-        Follow.objects.get_or_create(
-            user=user_request,
-            author=author,
-        )
-        return redirect('posts:profile', username=author.username)
+    # Ищем связь-подписку, если нет создаем
+    Follow.objects.get_or_create(
+        user=user_request,
+        author=author,
+    )
+    return redirect('posts:profile', username=author.username)
 
 
 @login_required
@@ -193,7 +187,5 @@ def profile_unfollow(request, username):
     author = get_object_or_404(User, username=username)
     if author == user_request:
         return redirect('posts:profile', username=author.username)
-    else:
-        if Follow.objects.filter(user=user_request, author=author).exists():
-            Follow.objects.get(user=user_request, author=author).delete()
-        return redirect('posts:profile', username=author.username)
+    Follow.objects.filter(user=user_request, author=author).delete()
+    return redirect('posts:profile', username=author.username)

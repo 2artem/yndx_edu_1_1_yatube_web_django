@@ -336,41 +336,75 @@ class PostViewsTests(TestCase):
             'posts:index')
         ).content)
 
-    # Тест, который проверяет видимость постов по подписке на автора
-    def test_subscription_system(self):
-        """Тест для проверки работы системы подписок."""
-        usr1 = PostViewsTests.user
-        usr2 = PostViewsTests.user_two
-        # Проверяем возможность подписки usr1 на автора usr2
+    # Тесты, которые проверяют видимость постов по подписке на автора:
+    def test_ability_subscribe_to_author(self):
+        """Подписка на автора возможна."""
         self.authorized_client.get(reverse(
             'posts:profile_follow', kwargs={'username': 'userok_two'})
         )
         self.assertTrue(Follow.objects.filter(
-            user=usr1, author=usr2
+            user=PostViewsTests.user,
+            author=PostViewsTests.user_two
         ).exists())
-        # Создаем тестовый пост, который хотим увидеть по подписке
+
+    def test_post_visible_in_subscription(self):
+        """Юзер видит пост автора, на которого подписан, у себя в ленте."""
+        self.authorized_client.get(reverse(
+            'posts:profile_follow', kwargs={'username': 'userok_two'})
+        )
         Post.objects.create(
-            author=usr2,
+            author=PostViewsTests.user_two,
             text='Текст по подписке',
             group=None,
         )
         response = self.authorized_client.get(reverse('posts:follow_index'))
-        # Проверяем что usr1 видит пост usr2 у себя в ленте
         self.assertEqual(
             response.context['page_obj'][0].text,
             'Текст по подписке'
         )
-        # Проверяем что usr1 может отписаться от usr2
+
+    def test_ability_unsubscribe_to_author(self):
+        """Юзер может отписаться от Автора, на которого был подписан."""
+        self.authorized_client.get(reverse(
+            'posts:profile_follow', kwargs={'username': 'userok_two'})
+        )
+        self.assertTrue(Follow.objects.filter(
+            user=PostViewsTests.user,
+            author=PostViewsTests.user_two
+        ).exists())
         self.authorized_client.get(reverse(
             'posts:profile_unfollow', kwargs={'username': 'userok_two'})
         )
         self.assertFalse(Follow.objects.filter(
-            user=usr1, author=usr2
+            user=PostViewsTests.user,
+            author=PostViewsTests.user_two
         ).exists())
+
+    def test_3(self):
+        """
+        Юзер, после отписки, больше не увидит посты автора у себя в ленте.
+        """
         # Проверяем что usr1 не увидит больше в своей ленте пост usr2
+        self.authorized_client.get(reverse(
+            'posts:profile_follow', kwargs={'username': 'userok_two'})
+        )
+        Post.objects.create(
+            author=PostViewsTests.user_two,
+            text='Текст по подписке',
+            group=None,
+        )
+        response = self.authorized_client.get(reverse('posts:follow_index'))
+        self.assertEqual(
+            response.context['page_obj'][0].text,
+            'Текст по подписке'
+        )
+        self.authorized_client.get(reverse(
+            'posts:profile_unfollow', kwargs={'username': 'userok_two'})
+        )
         cache.clear()
         response = self.authorized_client.get(reverse('posts:follow_index'))
         self.assertEqual(
             response.context['subscription'],
             'zero_authors'
         )
+        self.assertEqual(len(response.context['page_obj']), 0)
