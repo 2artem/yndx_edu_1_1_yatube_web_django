@@ -48,7 +48,3 @@ python3 manage.py createsuperuser
 ```
 python3 manage.py runserver
 ```
-
-### На сервере Linux
-
-
