@@ -3,7 +3,7 @@
 
 ## Ссылки на модернизированный проект:
 
-#### 1
+#### Реализован API для всех моделей проекта (CRUD для Yatube)
 
 https://github.com/2artem/yndx_edu_1_2_yatube_api_drf_crud
 
