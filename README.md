@@ -3,8 +3,13 @@
 
 ## Ссылки на модернизированный проект:
 
-1
-2
+#### 1
+
+https://github.com/2artem/yndx_edu_1_2_yatube_api_drf_crud
+
+#### 2
+
+https://github.com/2artem/yndx_edu_1_3_yatube_api_drf_subscriptions
 
 ## Техническое задание:
 ```
