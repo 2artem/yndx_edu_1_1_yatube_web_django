@@ -11,7 +11,7 @@
 
 https://github.com/2artem/yndx_edu_1_2_yatube_api_drf_crud
 
-#### 2
+#### Реализован API по прилагающийся документации, добавлена модель подписок на авторов.
 
 https://github.com/2artem/yndx_edu_1_3_yatube_api_drf_subscriptions
 
